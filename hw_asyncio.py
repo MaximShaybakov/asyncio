@@ -1,10 +1,9 @@
 import asyncio
-import datetime
 from aiohttp import ClientSession
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, String, Integer
+from sqlalchemy import Column, String, Integer, ARRAY
 from more_itertools import chunked
 
 
@@ -31,10 +30,10 @@ class HeroesModel(Base):
     skin_color = Column(String(255), nullable=True)
     spices = Column(String(255), nullable=True)
     starships = Column(String(255), nullable=True)
-    vechicles = Column(String(255), nullable=True)
+    vechicles = Column(ARRAY(String), nullable=True)
 
 
-CHUNK_SIZE = 10
+CHUNK_SIZE = 40
 
 
 async def chunked_async(async_iter, size):
@@ -83,6 +82,10 @@ async def main():
 
     async for chunk in chunked_async(get_people(), CHUNK_SIZE):
         asyncio.create_task(insert_people(chunk))
+
+    tasks = set(asyncio.all_tasks()) - {asyncio.current_task()}
+    for task in tasks:
+        await task
 
 
 if __name__ == '__main__':
