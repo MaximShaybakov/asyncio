@@ -19,8 +19,8 @@ class HeroesModel(Base):
 
     id = Column(Integer, primary_key=True)
     birth_year = Column(String(255), nullable=True)
+    created = Column(String(255), nullable=True)
     eye_color = Column(String(255), nullable=True)
-    films = Column(String(255), nullable=True)
     gender = Column(String(255), nullable=True)
     hair_color = Column(String(255), nullable=True)
     height = Column(String(255), nullable=True)
@@ -28,9 +28,6 @@ class HeroesModel(Base):
     mass = Column(String(255), nullable=True)
     name = Column(String(255), nullable=True)
     skin_color = Column(String(255), nullable=True)
-    spices = Column(String(255), nullable=True)
-    starships = Column(String(255), nullable=True)
-    vechicles = Column(ARRAY(String), nullable=True)
 
 
 CHUNK_SIZE = 40
@@ -50,13 +47,30 @@ async def chunked_async(async_iter, size):
             buffer.clear()
 
 
-async def get_person(people_id: int, session: ClientSession):
-    async with session.get(f'https://www.swapi.tech/api/people/{people_id}') as response:
+async def get_person(people_id: int, session: ClientSession) -> dict | str:
+    print(f'start {people_id}')
+    async with session.get(f'https://swapi.tech/api/people/{people_id}') as response:
         json_data = await response.json()
-        try:
-            return json_data['result']['properties']
-        except KeyError:
-            print(people_id, json_data)
+    person_data = {'id': people_id}
+    if json_data.get('message') == 'ok':
+        result_dic = json_data.get('result').get('properties')
+        person_data.update({'birth_year': result_dic.get('birth_year'),
+                            'eye_color': result_dic.get('eye_color'),
+                            'films': result_dic.get('films'),
+                            'gender': result_dic.get('gender'),
+                            'hair_color': result_dic.get('hair_color'),
+                            'height': result_dic.get('height'),
+                            'homeworld': result_dic.get('homeworld'),
+                            'mass': result_dic.get('mass'),
+                            'name': result_dic.get('name'),
+                            'skin_color': result_dic.get('skin_color'),
+                            'species': result_dic.get('species'),
+                            'starships': result_dic.get('starships'),
+                            'vehicles': result_dic.get('vehicles')})
+        return person_data
+    else:
+        print(f'The Person with id {people_id} not found!')
+        return 'Not Found'
 
 
 async def get_people():
