@@ -19,7 +19,7 @@ class HeroesModel(Base):
 
     id = Column(Integer, primary_key=True)
     birth_year = Column(String(255), nullable=True)
-    created = Column(String(255), nullable=True)
+    films = Column(String(255), nullable=True)
     eye_color = Column(String(255), nullable=True)
     gender = Column(String(255), nullable=True)
     hair_color = Column(String(255), nullable=True)
@@ -28,6 +28,9 @@ class HeroesModel(Base):
     mass = Column(String(255), nullable=True)
     name = Column(String(255), nullable=True)
     skin_color = Column(String(255), nullable=True)
+    species = Column(String(255), nullable=True)
+    starships = Column(String(255), nullable=True)
+    vehicles = Column(ARRAY(String), nullable=True)
 
 
 CHUNK_SIZE = 40
