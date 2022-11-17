@@ -6,7 +6,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, String, Integer, ARRAY
 from more_itertools import chunked
 
-CHUNK_SIZE = 2
+CHUNK_SIZE = 10
 
 
 async def chunked_async(async_iter, size):
