@@ -6,6 +6,21 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, String, Integer, ARRAY
 from more_itertools import chunked
 
+CHUNK_SIZE = 2
+
+
+async def chunked_async(async_iter, size):
+    buffer = []
+    while True:
+        try:
+            item = await async_iter.__anext__()
+        except StopAsyncIteration:
+            break
+        buffer.append(item)
+        if len(buffer) == size:
+            yield buffer
+            buffer = []
+
 
 PG_DSN = 'postgresql+asyncpg://test:1234@127.0.0.1:5431/test_asyncio'
 engine = create_async_engine(PG_DSN)
@@ -33,21 +48,19 @@ class HeroesModel(Base):
     vehicles = Column(ARRAY(String), nullable=True)
 
 
-CHUNK_SIZE = 40
-
-
-async def chunked_async(async_iter, size):
-
-    buffer = []
-    while True:
-        try:
-            item = await async_iter.__anext__()
-        except StopAsyncIteration:
-            break
-        buffer.append(item)
-        if len(buffer) == size:
-            yield buffer
-            buffer.clear()
+# если функция "chunked_async" написана в этом месте данные в БД не пишутся.
+# понять смысл сего таинства мне не удалось
+# async def chunked_async(async_iter, size):
+#     buffer = []
+#     while True:
+#         try:
+#             item = await async_iter.__anext__()
+#         except StopAsyncIteration:
+#             break
+#         buffer.append(item)
+#         if len(buffer) == size:
+#             yield buffer
+#             buffer = []
 
 
 async def get_person(people_id: int, session: ClientSession) -> dict | str:
@@ -88,8 +101,9 @@ async def get_people():
 
 async def insert_people(people_chunk):
     async with Session() as session:
-        session.add_all([HeroesModel(**item) for item in people_chunk])
+        session.add_all([HeroesModel(**item) for item in people_chunk if item != str])
         await session.commit()
+        # некоторые записи падают с ошибкой, костыли не спасли
 
 
 async def main():
